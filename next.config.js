@@ -4,9 +4,24 @@ const nextConfig = {
 	images: {
 		unoptimized: true, // Required for static export
 	},
-	// Disable server components for Tauri
+	// Enable latest Next.js features
 	experimental: {
-		serverActions: false,
+		serverActions: false, // Disabled for Tauri
+		optimizePackageImports: true,
+		turbo: {
+			loaders: {
+				// Enable Turbopack loaders for faster builds
+				".js": ["swc"],
+				".jsx": ["swc"],
+				".ts": ["swc"],
+				".tsx": ["swc"],
+			},
+		},
+		// Enable React optimizations
+		runtime: "edge",
+		optimizeCss: true,
+		scrollRestoration: true,
+		typedRoutes: true,
 	},
 	// Optimize for Tauri's development server
 	webpack: (config, { dev }) => {
@@ -17,7 +32,31 @@ const nextConfig = {
 				aggregateTimeout: 300,
 			};
 		}
+		// Add performance optimizations
+		config.optimization = {
+			...config.optimization,
+			runtimeChunk: "single",
+			splitChunks: {
+				chunks: "all",
+				maxInitialRequests: 25,
+				minSize: 20000,
+			},
+		};
 		return config;
+	},
+	// Enable strict mode for better performance
+	reactStrictMode: true,
+	// Minimize JavaScript bundles
+	swcMinify: true,
+	// Enable compiler optimizations
+	compiler: {
+		removeConsole: process.env.NODE_ENV === "production",
+		styledComponents: true,
+	},
+	// Cache optimization
+	onDemandEntries: {
+		maxInactiveAge: 25 * 1000,
+		pagesBufferLength: 2,
 	},
 };
 
