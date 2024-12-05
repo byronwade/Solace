@@ -1,0 +1,48 @@
+[package]
+name = "solace"
+version = "0.1.0"
+edition = "2021"
+authors = ["Solace Browser Team"]
+description = "A privacy-first, high-performance web browser built in Rust"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.32", features = ["full"] }
+
+# UI Framework
+tauri = { version = "1.5", features = ["api-all", "macos-private-api"] }
+
+# Web rendering
+wry = { version = "0.34", features = ["transparent"] }
+webview2-com = { version = "0.28", optional = true }
+
+# Networking
+reqwest = { version = "0.11", features = ["json", "native-tls"] }
+hyper = { version = "0.14", features = ["full"] }
+trust-dns-resolver = "0.23"
+
+# Error handling and logging
+anyhow = "1.0"
+log = "0.4"
+env_logger = "0.10"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Platform-specific dependencies
+[target.'cfg(target_os = "macos")'.dependencies]
+cocoa = "0.25"
+objc = "0.2"
+core-foundation = "0.9"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+webview2-com = "0.28"
+windows = { version = "0.48", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true 
