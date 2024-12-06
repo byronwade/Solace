@@ -3,64 +3,86 @@
     windows_subsystem = "windows"
 )]
 
-mod browser;
-use browser::{BrowserState, get_settings, update_settings, navigate, toggle_hardware_acceleration};
+use tauri::Manager;
+use window_vibrancy::{apply_vibrancy, NSVisualEffectMaterial};
+use window_shadows::set_shadow;
+
+mod engine;
+use engine::{EngineConfig, init_engine, switch_engine, navigate, set_private_mode as set_engine_private_mode};
+
+#[tauri::command]
+async fn navigate_to(window: tauri::Window, url: String) -> Result<(), String> {
+    println!("Navigating to: {}", url);
+    navigate(&window, &url)
+}
+
+#[tauri::command]
+async fn switch_browser_engine(window: tauri::Window, engine_type: String) -> Result<(), String> {
+    println!("Switching engine to: {}", engine_type);
+    let config = EngineConfig {
+        engine_type,
+        is_private: false, // Maintain current private mode state
+    };
+    switch_engine(&window, config)
+}
+
+#[tauri::command]
+async fn set_private_mode(window: tauri::Window, enabled: bool) -> Result<(), String> {
+    println!("Setting private mode: {}", enabled);
+    set_engine_private_mode(&window, enabled)
+}
+
+#[tauri::command]
+async fn minimize_window(window: tauri::Window) {
+    window.minimize().unwrap();
+}
+
+#[tauri::command]
+async fn maximize_window(window: tauri::Window) {
+    if window.is_maximized().unwrap() {
+        window.unmaximize().unwrap();
+    } else {
+        window.maximize().unwrap();
+    }
+}
+
+#[tauri::command]
+async fn close_window(window: tauri::Window) {
+    window.close().unwrap();
+}
 
 fn main() {
-    let context = tauri::generate_context!();
-    
     tauri::Builder::default()
-        .manage(BrowserState::default())
-        .invoke_handler(tauri::generate_handler![
-            get_settings,
-            update_settings,
-            navigate,
-            toggle_hardware_acceleration
-        ])
         .setup(|app| {
             let window = app.get_window("main").unwrap();
-            
-            // Platform-specific window setup
-            #[cfg(target_os = "windows")]
-            {
-                use window_shadows::set_shadow;
-                set_shadow(&window, true).expect("Failed to add window shadows");
-                
-                // Enable hardware acceleration and set optimal WebView2 settings
-                use webview2_com::Microsoft::Web::WebView2::Win32::CoreWebView2Environment;
-                let env = CoreWebView2Environment::CreateWithOptions(
-                    None,
-                    None,
-                    None,
-                ).expect("Failed to create WebView2 environment");
-                
-                if let Ok(settings) = env.CreateCoreWebView2Controller(window.hwnd() as _) {
-                    if let Ok(webview) = settings.CoreWebView2() {
-                        webview.SetIsWebMessageEnabled(true).unwrap();
-                        webview.SetAreDefaultContextMenusEnabled(true).unwrap();
-                        webview.SetIsStatusBarEnabled(false).unwrap();
-                    }
-                }
-            }
-            
+
+            // Apply vibrancy effect on macOS
             #[cfg(target_os = "macos")]
-            {
-                use window_shadows::set_shadow;
-                set_shadow(&window, true).expect("Failed to add window shadows");
-                
-                // macOS-specific optimizations
-                unsafe {
-                    use cocoa::appkit::{NSWindow, NSWindowStyleMask};
-                    let ns_window = window.ns_window().unwrap() as cocoa::base::id;
-                    NSWindow::setAllowsAutomaticWindowTabbing_(ns_window, false);
-                    let mask = NSWindow::styleMask(ns_window);
-                    NSWindow::setStyleMask_(ns_window, mask | NSWindowStyleMask::NSFullSizeContentViewWindowMask);
-                    NSWindow::setTitlebarAppearsTransparent_(ns_window, true);
-                }
-            }
+            apply_vibrancy(&window, NSVisualEffectMaterial::HudWindow, None, None)
+                .expect("Failed to apply vibrancy");
+
+            // Apply window shadow
+            #[cfg(target_os = "macos")]
+            set_shadow(&window, true).expect("Failed to set window shadow");
+
+            // Initialize engine with default configuration
+            let config = EngineConfig {
+                engine_type: String::from("webkit"),
+                is_private: false,
+            };
             
+            init_engine(&window, config).expect("Failed to initialize engine");
+
             Ok(())
         })
-        .run(context)
-        .expect("Error while running Solace Browser");
-} 
+        .invoke_handler(tauri::generate_handler![
+            navigate_to,
+            switch_browser_engine,
+            set_private_mode,
+            minimize_window,
+            maximize_window,
+            close_window
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}

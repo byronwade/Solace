@@ -1,64 +1,70 @@
 {
-	"build": {
-		"beforeDevCommand": "",
-		"beforeBuildCommand": "",
-		"devPath": "../src",
-		"distDir": "../src",
-		"withGlobalTauri": true
-	},
-	"package": {
-		"productName": "Solace Browser",
-		"version": "0.1.0"
-	},
-	"tauri": {
-		"allowlist": {
-			"all": true
-		},
-		"bundle": {
-			"active": true,
-			"category": "DeveloperTool",
-			"copyright": "",
-			"deb": {
-				"depends": []
-			},
-			"externalBin": [],
-			"icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
-			"identifier": "com.solace.browser",
-			"longDescription": "A privacy-first, high-performance web browser built in Rust",
-			"macOS": {
-				"minimumSystemVersion": "10.13",
-				"frameworks": [],
-				"providerShortName": null,
-				"signingIdentity": null,
-				"entitlements": null,
-				"exceptionDomain": "",
-				"license": "LICENSE"
-			},
-			"resources": [],
-			"shortDescription": "Solace Browser",
-			"targets": "all",
-			"windows": {
-				"certificateThumbprint": null,
-				"digestAlgorithm": "sha256",
-				"timestampUrl": ""
-			}
-		},
-		"security": {
-			"csp": "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'"
-		},
-		"macOSPrivateApi": true,
-		"windows": [
-			{
-				"fullscreen": false,
-				"height": 800,
-				"resizable": true,
-				"title": "Solace Browser",
-				"width": 1200,
-				"decorations": true,
-				"transparent": false,
-				"maximized": false,
-				"theme": "Light"
-			}
-		]
-	}
+  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/1.x/core/tauri-config-schema/schema.json",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devPath": "http://localhost:1420",
+    "distDir": "../dist"
+  },
+  "package": {
+    "productName": "Solace Browser",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true,
+        "execute": true
+      },
+      "window": {
+        "all": true
+      },
+      "protocol": {
+        "all": true,
+        "asset": true,
+        "assetScope": ["**"]
+      }
+    },
+    "bundle": {
+      "active": true,
+      "targets": "all",
+      "identifier": "com.solace.browser",
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ]
+    },
+    "security": {
+      "csp": null,
+      "dangerousRemoteDomainIpcAccess": [
+        {
+          "domain": "*",
+          "windows": ["main"],
+          "enableTauriAPI": true
+        }
+      ]
+    },
+    "macOSPrivateApi": true,
+    "windows": [
+      {
+        "label": "main",
+        "fullscreen": false,
+        "height": 800,
+        "resizable": true,
+        "title": "Solace Browser",
+        "width": 1200,
+        "decorations": false,
+        "transparent": true,
+        "visible": true,
+        "center": true,
+        "minHeight": 400,
+        "minWidth": 600
+      }
+    ]
+  }
 }

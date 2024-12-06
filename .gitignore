@@ -1,36 +1,10 @@
-# Next.js
-.next/
-out/
-dist/
-build/
-node_modules/
-.env*.local
-.vercel
-*.tsbuildinfo
-next-env.d.ts
-
-# Rust
-target/
-**/*.rs.bk
-Cargo.lock
-debug/
-release/
-
-# Tauri
-src-tauri/target/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS
 .DS_Store
-Thumbs.db
-
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log* 
+node_modules
+/build
+/.svelte-kit
+/package
+.env
+.env.*
+!.env.example
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
