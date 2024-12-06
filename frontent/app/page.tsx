@@ -1,101 +1,50 @@
-import Image from "next/image";
+import { Suspense } from "react";
+import dynamic from "next/dynamic";
+import { unstable_cache } from "next/cache";
+import { getBrowserState } from "@/lib/ipc";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+// Import BrowserControls with no SSR since it uses browser APIs
+const BrowserControls = dynamic(() => import("@/components/BrowserControls"), {
+	ssr: false,
+});
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+// Cache the initial browser state
+const getInitialState = unstable_cache(
+	async () => {
+		try {
+			return await getBrowserState();
+		} catch (e) {
+			console.error("Failed to get initial browser state:", e);
+			return null;
+		}
+	},
+	["initialBrowserState"],
+	{ revalidate: 1 }
+);
+
+export default async function Home() {
+	const initialState = await getInitialState();
+
+	return (
+		<main className="flex flex-col h-screen bg-white dark:bg-black">
+			<Suspense fallback={<div>Loading controls...</div>}>
+				<BrowserControls />
+			</Suspense>
+
+			<div className="flex-1 relative">
+				{/* This div will be used by the Rust backend to render the browser viewport */}
+				<div id="browser-viewport" className="absolute inset-0" />
+			</div>
+
+			{/* Display security info */}
+			{initialState?.isSecure && (
+				<div className="absolute top-4 right-4 flex items-center space-x-2 text-green-500">
+					<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+						<path fillRule="evenodd" d="M10 1.944a1 1 0 01.485.12l6 3A1 1 0 0117 6v4c0 4.244-2.862 7.532-7 8.674-4.138-1.142-7-4.43-7-8.674V6a1 1 0 01.515-.936l6-3A1 1 0 0110 1.944zM5 6.678V10c0 2.83 1.308 5.23 3.613 6.616C9.4 15.866 10.6 15 12 15c1.4 0 2.6.866 3.387 1.616C17.692 15.23 19 12.83 19 10V6.678l-4.293-2.146a1 1 0 00-.914 0L10 6.377l-3.793-1.845a1 1 0 00-.914 0L5 6.678z" clipRule="evenodd" />
+					</svg>
+					<span>Secure Connection</span>
+				</div>
+			)}
+		</main>
+	);
 }

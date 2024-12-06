@@ -1,0 +1,60 @@
+[package]
+name = "solace-browser"
+version = "0.1.0"
+edition = "2021"
+description = "A secure, multi-engine browser built with Rust"
+
+[dependencies]
+# Core async runtime
+tokio = { version = "1.36", features = ["full"] }
+# Web server for UI communication
+axum = { version = "0.7", features = ["ws"] }
+tower-http = { version = "0.5", features = ["cors", "fs"] }
+async-stream = "0.3"
+hyper = { version = "1.1", features = ["full"] }
+hyper-util = { version = "0.1", features = ["full"] }
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+# Logging
+tracing = "0.1"
+tracing-subscriber = "0.3"
+# Browser engine integration
+chromiumoxide = { git = "https://github.com/mattsse/chromiumoxide", features = ["tokio-runtime"] }
+chromiumoxide_cdp = { git = "https://github.com/mattsse/chromiumoxide" }
+futures = "0.3"  # For async/await
+# Window management
+tao = { version = "0.24", features = ["serde"] }
+wry = { version = "0.35", features = ["transparent"] }
+raw-window-handle = "0.6"
+# Security
+rustls = "0.22"  # TLS implementation
+webpki = "0.22"  # Certificate verification
+# Configuration
+config = "0.14"
+# Process management
+which = "6.0"
+# Tor integration
+arti-client = "0.14"
+# State management
+parking_lot = "0.12"
+# Async traits
+async-trait = "0.1"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.52", features = [
+    "Win32_Foundation",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_System_LibraryLoader",
+    "Win32_Graphics_Gdi",
+]}
+
+[features]
+default = ["blink"]
+blink = []
+gecko = []
+webkit = []
+servo = []
